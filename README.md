@@ -77,7 +77,7 @@ Notas:
 
 ## 3. Requisitos
 
-- El **contenedor `hadoop` de la práctica** "Hadoop Standalone en contenedor Debian", con **Hadoop 3.3.6** funcionando. Comprueba la versión (ver paso 3).
+- El **contenedor `hadoop`** con **Hadoop 3.3.6** funcionando (si no lo tienes creado, el paso 2 incluye los comandos para levantarlo desde cero).
 - **Docker** instalado y encendido en tu computadora.
 - **Git** para clonar este repositorio.
 
@@ -99,24 +99,44 @@ Los pasos 1 a 3 y 6 a 7 son **idénticos** en Windows y Linux. Cambian solo la i
 ### Paso 1 💻: clonar el repositorio
 
 ```bash
-git clone https://github.com/gustavoadalid1-debug/EP.02.02.-Exposiciones-por-equipos-Ejemplos-de-MapReduce-Gustavo-Valentin-Saul-.git bda-equipo-4-pi
+git clone [https://github.com/gustavoadalid1-debug/EP.02.02.-Exposiciones-por-equipos-Ejemplos-de-MapReduce-Gustavo-Valentin-Saul-.git](https://github.com/gustavoadalid1-debug/EP.02.02.-Exposiciones-por-equipos-Ejemplos-de-MapReduce-Gustavo-Valentin-Saul-.git) bda-equipo-4-pi
 cd bda-equipo-4-pi
 ```
 
-Esto crea la carpeta `bda-equipo-4-pi` (el nombre corto es solo para escribir menos) y entra a ella. **Todos los comandos 💻 siguientes se escriben desde esta carpeta.**
+Esto crea la carpeta `bda-equipo-4-pi` y entra a ella. **Todos los comandos 💻 siguientes se escriben desde esta carpeta.**
 
-### Paso 2 💻: encender el contenedor
+### Paso 2 💻: encender o crear el contenedor
 
-Primero comprueba que existe y si está encendido:
+Primero comprueba si ya tienes el contenedor en tu máquina:
 
 ```bash
 docker ps -a
 ```
 
-En la columna `STATUS` debe verse `Up` para el contenedor `hadoop`. Si dice `Exited`, enciéndelo (**no uses `docker run` ni `docker rm`**):
+#### Opción 1: Si ya tienes el contenedor creado de la práctica anterior
+Si en la columna `NAMES` aparece `hadoop`, simplemente enciéndelo si está en estado `Exited`:
 
 ```bash
 docker start hadoop
+```
+
+#### Opción 2: Si estás en una computadora limpia (crear el contenedor desde cero)
+Si el contenedor `hadoop` no existe en tu lista, créalo e instálalo ejecutando estos tres comandos en orden:
+
+```bash
+# 1. Crear el contenedor base Debian Bullseye
+docker run -dit --name hadoop debian:bullseye bash
+
+# 2. Configurar repositorios de archivo e instalar dependencias
+docker exec -u root hadoop bash -c 'echo "Acquire::Check-Valid-Until \"false\";" > /etc/apt/apt.conf.d/99no-check-valid-until && echo -e "deb [http://archive.debian.org/debian](http://archive.debian.org/debian) bullseye main contrib non-free\ndeb [http://archive.debian.org/debian-security](http://archive.debian.org/debian-security) bullseye-security main contrib non-free" > /etc/apt/sources.list && apt-get update && apt-get install -y --no-install-recommends openjdk-11-jdk-headless wget procps ca-certificates'
+
+# 3. Crear usuario hadoop, descargar Hadoop 3.3.6 y configurar variables de entorno
+docker exec -u root hadoop bash -c 'useradd -m -s /bin/bash hadoop && cd /opt && wget [https://archive.apache.org/dist/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz](https://archive.apache.org/dist/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz) && tar -xzf hadoop-3.3.6.tar.gz && mv hadoop-3.3.6 hadoop && rm hadoop-3.3.6.tar.gz && chown -R hadoop:hadoop /opt/hadoop'
+docker exec -u hadoop hadoop bash -c 'cat << "EOF" >> ~/.bashrc
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+export HADOOP_HOME=/opt/hadoop
+export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+EOF'
 ```
 
 > 🪟 En Windows, si sale `failed to connect to the docker API`, **Docker Desktop está apagado**: ábrelo y espera a que diga *Engine running*.
@@ -127,11 +147,11 @@ docker start hadoop
 docker exec -u hadoop hadoop hadoop version
 ```
 
-Debe empezar con `Hadoop 3.3.6`. Si tu contenedor tiene otra versión, el script funciona igual (busca el `.jar` de ejemplos solo), pero la entrega pide 3.3.6.
+Debe empezar con `Hadoop 3.3.6`.
 
 ### Paso 4 💻: copiar el script al contenedor
 
-Crea la carpeta de trabajo, copia el script y dale al usuario `hadoop` la propiedad (los archivos copiados con `docker cp` quedan a nombre de `root`):
+Crea la carpeta de trabajo, copia el script y dale al usuario `hadoop` la propiedad:
 
 ```bash
 docker exec -u root hadoop mkdir -p /tmp/equipo4
@@ -149,34 +169,33 @@ Abre una terminal dentro del contenedor **como usuario `hadoop`**:
 docker exec -it -u hadoop hadoop bash
 ```
 
-El prompt debe cambiar a `hadoop@hadoop:~$`. Ahora, **ya dentro del contenedor**:
+El prompt cambiará a `hadoop@...:~$`. Ahora ejecuta:
 
-**Opción A: ejecutar todo con el script** (recomendada para reproducir):
+**Opción A: ejecutar todo con el script** (recomendada para reproducir la práctica completa):
 
 ```bash
 bash /tmp/equipo4/ejecutar.sh
 ```
 
-El script corre `pi` con 7 combinaciones de parámetros (tarda unos segundos por cada una) y guarda los resultados en `/tmp/equipo4/resumen.txt` y los registros completos en `/tmp/equipo4/logs/`.
+El script corre `pi` con 7 combinaciones de parámetros y guarda los resultados en `/tmp/equipo4/resumen.txt` y los registros completos en `/tmp/equipo4/logs/`.
 
-**Opción B: ejecutar una sola vez a mano** (es lo que usamos en la demo):
+**Opción B: ejecutar una sola vez a mano** (para demostraciones rápidas):
 
 ```bash
 hadoop jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar pi 10 1000
 ```
 
 Qué significa cada parte:
-
 - `hadoop jar` ejecuta un programa empaquetado en un `.jar`.
 - `…/hadoop-mapreduce-examples-3.3.6.jar` es el paquete de ejemplos de Hadoop.
 - `pi` es el ejemplo que queremos.
 - `10` = número de mappers. `1000` = puntos que genera cada mapper (10 000 en total).
 
-Para salir del contenedor cuando termines: `exit` (el contenedor **sigue existiendo**).
+Para salir del contenedor cuando termines: escribe `exit` (el contenedor continuará existiendo).
 
 ### Resultado esperado
 
-Al final de la salida debe verse algo así (los mensajes `INFO` del medio y el tiempo varían):
+Al final de la salida debe verse:
 
 ```
 Number of Maps  = 10
@@ -186,7 +205,7 @@ Wrote input for Map #1
 ...
 Wrote input for Map #9
 Starting Job
-... (muchas líneas INFO) ...
+... (mensajes INFO) ...
 Job Finished in N seconds
 Estimated value of Pi is 3.14080000000000000000
 ```
@@ -203,8 +222,6 @@ La línea que debe coincidir **exactamente** es la última: con `pi 10 1000` sie
 | `pi 10 100000` | 1 000 000 | 3.14155200000000000000 | 0.000041 |
 | `pi 16 1000` | 16 000 | 3.14250000000000000000 | 0.00091 |
 | `pi 16 1000000` (opcional, ver abajo) | 16 000 000 | 3.14159125000000000000 | 0.0000014 |
-
-Los valores de `pi 16 1000` y `pi 16 1000000` coinciden con salidas publicadas de Hadoop; los demás se calcularon con la réplica de `scripts/simular_pi.py`, que usa el mismo algoritmo.
 
 ### Paso 6 💻: copiar los resultados a tu computadora
 
@@ -237,19 +254,17 @@ Debe imprimir `IGUALES`.
 
 ### Opcional A 🐳: ejecución grande (16 millones de puntos)
 
-Dentro del contenedor, el script acepta `grande` para agregar `pi 16 1000000`:
+Dentro del contenedor, el script acepta el argumento `grande` para agregar `pi 16 1000000`:
 
 ```bash
 bash /tmp/equipo4/ejecutar.sh grande
 ```
 
-Tarda más (de unos segundos a un par de minutos según tu computadora). En ese caso el resumen incluye una línea extra; en el paso 7 la comparación mostrará esa línea como diferencia, y es normal.
-
 ### Opcional B 💻: verificar sin Hadoop
 
-`scripts/simular_pi.py` replica el algoritmo en Python (solo necesita Python 3, sin instalar nada más):
+`scripts/simular_pi.py` replica el algoritmo en Python (solo necesita Python 3, sin librerías externas):
 
-🪟 **Windows:** `python scripts/simular_pi.py 10 1000`
+🪟 **Windows:** `py scripts/simular_pi.py 10 1000` *(o `python scripts/simular_pi.py 10 1000`)*  
 🐧 **Linux:** `python3 scripts/simular_pi.py 10 1000`
 
 Debe imprimir el mismo valor que Hadoop (`3.14080000000000000000`).
@@ -268,22 +283,21 @@ En la carpeta [`ejercicio/`](ejercicio/): `ejercicio.md` (para resolver) y `solu
 
 ## 6. Errores comunes
 
-Los dos primeros nos pasaron durante la práctica; los demás son los más probables al reproducir.
-
 | Error | Causa | Solución |
 |---|---|---|
-| `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine` (Windows) | Docker Desktop está cerrado | Abre Docker Desktop y espera a *Engine running*. Repite el comando |
-| La terminal se cierra o se congela al presionar `Ctrl + Z` | En PowerShell `Ctrl + Z` no detiene programas, cierra la sesión | Usa `Ctrl + C` para detener un comando y `exit` para salir del contenedor. Para volver: `docker exec -it -u hadoop hadoop bash` (si está encendido) o `docker start -ai hadoop` y luego `su - hadoop` |
-| Se borró el contenedor | Se ejecutó `docker rm hadoop` | **Nunca lo ejecutes**: borra Hadoop, Java y todos los archivos. Habría que repetir la práctica de instalación |
-| `bash: /tmp/equipo4/ejecutar.sh: /bin/bash^M: bad interpreter` o `$'\r': command not found` | El script se guardó con saltos de línea de Windows (CRLF) | Este repo trae un `.gitattributes` que lo evita. Si pasa: `docker exec -u hadoop hadoop sed -i 's/\r$//' /tmp/equipo4/ejecutar.sh` |
-| `Permission denied` al escribir en `/tmp/equipo4` | Faltó el `chown` del paso 4 | `docker exec -u root hadoop chown -R hadoop:hadoop /tmp/equipo4` |
-| `docker cp` falla con `Could not find the file /tmp/equipo4` | Faltó crear la carpeta | Ejecuta el `mkdir -p` del paso 4 antes del `docker cp` |
-| 🪟 En Git Bash, las rutas como `/tmp/equipo4` se convierten en `C:/Program Files/Git/...` | Git Bash reescribe las rutas de Linux | Usa PowerShell, o antepone `MSYS_NO_PATHCONV=1` al comando docker |
-| `Tmp directory … already exists` o quedó una carpeta `QuasiMonteCarlo_*` | Se interrumpió un trabajo anterior | `rm -rf /tmp/equipo4/QuasiMonteCarlo_*` dentro del contenedor |
-| `ERROR: JAVA_HOME … does not exist` o `Cannot execute …/hadoop-config.sh` | Variables de entorno mal escritas en `.bashrc` (por ejemplo `HADOOP_HOME` con una barra final) | Corrige `~/.bashrc` y ejecuta `source ~/.bashrc`. Puedes comprobar con `echo $HADOOP_HOME` |
-| El resultado de `pi` no coincide con la tabla | Versión de Hadoop distinta, o los parámetros no son los mismos | Revisa `hadoop version` y los números de `pi`. Si todo coincide y aun así difiere, abre un Issue con la captura |
-
-> `[Valentín y Saúl: agreguen aquí los errores que les salieron a ustedes]`
+| `No such container: hadoop` al ejecutar `docker start hadoop` | El contenedor no ha sido creado en esa máquina | Sigue la **Opción 2 del Paso 2** para crear el contenedor base desde cero con `docker run` y configurar Hadoop. |
+| `E: Failed to fetch ... 404 Not Found` al hacer `apt-get install` | Debian Bullseye pasó al archivo histórico oficial | Los repositorios deben apuntar a `http://archive.debian.org/debian` (ya incluido en el comando de creación del Paso 2). |
+| En Windows `python` abre la Microsoft Store o dice `Python was not found` | Los "Alias de ejecución de aplicaciones" de Windows interceptan la llamada | Usa `py scripts/simular_pi.py 10 1000` o desactiva los alias en Configuración > Aplicaciones > Alias de ejecución de aplicaciones. |
+| `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine` (Windows) | Docker Desktop está cerrado | Abre Docker Desktop y espera a *Engine running*. Repite el comando. |
+| La terminal se cierra o se congela al presionar `Ctrl + Z` | En PowerShell `Ctrl + Z` no suspende programas, cierra la sesión | Usa `Ctrl + C` para detener un comando y `exit` para salir del contenedor. Para volver: `docker exec -it -u hadoop hadoop bash`. |
+| Se borró el contenedor | Se ejecutó `docker rm hadoop` | **Nunca lo ejecutes**: borra Hadoop, Java y todos los archivos. Habría que crearlo de nuevo con el Paso 2. |
+| `bash: /tmp/equipo4/ejecutar.sh: /bin/bash^M: bad interpreter` o `$'\r': command not found` | El script se guardó con saltos de línea de Windows (CRLF) | Este repositorio incluye un `.gitattributes` que lo previene. Si ocurre: `docker exec -u hadoop hadoop sed -i 's/\r$//' /tmp/equipo4/ejecutar.sh`. |
+| `Permission denied` al escribir en `/tmp/equipo4` | Faltó el `chown` del paso 4 | Ejecuta `docker exec -u root hadoop chown -R hadoop:hadoop /tmp/equipo4`. |
+| `docker cp` falla con `Could not find the file /tmp/equipo4` | Faltó crear la carpeta de destino | Ejecuta el comando `mkdir -p` del Paso 4 antes de transferir archivos. |
+| 🪟 En Git Bash, las rutas como `/tmp/equipo4` se convierten en `C:/Program Files/Git/...` | Git Bash reescribe las rutas de Linux | Usa PowerShell o añade `MSYS_NO_PATHCONV=1` al comando de docker. |
+| `Tmp directory … already exists` o quedó una carpeta `QuasiMonteCarlo_*` | Se interrumpió una ejecución previa de forma forzada | Ejecuta `rm -rf /tmp/equipo4/QuasiMonteCarlo_*` dentro del contenedor. |
+| `ERROR: JAVA_HOME … does not exist` | Variables de entorno no cargadas en el shell | Ejecuta `source ~/.bashrc` o revisa que `echo $JAVA_HOME` apunte a `/usr/lib/jvm/java-11-openjdk-amd64`. |
+| El resultado de `pi` no coincide con la tabla | Versión de Hadoop distinta o parámetros cambiados | Revisa `hadoop version` y los números pasados al comando. |
 
 ---
 
