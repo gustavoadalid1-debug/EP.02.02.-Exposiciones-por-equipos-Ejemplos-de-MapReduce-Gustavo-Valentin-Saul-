@@ -97,7 +97,7 @@ Notas:
 ### Paso 1 💻: clonar el repositorio
 
 ```bash
-git clone [https://github.com/gustavoadalid1-debug/EP.02.02.-Exposiciones-por-equipos-Ejemplos-de-MapReduce-Gustavo-Valentin-Saul-.git](https://github.com/gustavoadalid1-debug/EP.02.02.-Exposiciones-por-equipos-Ejemplos-de-MapReduce-Gustavo-Valentin-Saul-.git) bda-equipo-4-pi
+git clone https://github.com/gustavoadalid1-debug/EP.02.02.-Exposiciones-por-equipos-Ejemplos-de-MapReduce-Gustavo-Valentin-Saul-.git bda-equipo-4-pi
 cd bda-equipo-4-pi
 ```
 [cite: 15]
