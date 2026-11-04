@@ -7,8 +7,8 @@ Ejemplo de MapReduce que estima el valor de **π** con puntos en un cuadrado. Es
 ## Integrantes
 
 - Gustavo Adalid Catalan Carmen
-- Valentín `[COMPLETAR apellidos]`
-- Saúl `[COMPLETAR apellidos]`
+- Valentín Almaraz Martínez
+- Alberto Saúl Lopez Crespo
 
 ## Contenido del repositorio
 
