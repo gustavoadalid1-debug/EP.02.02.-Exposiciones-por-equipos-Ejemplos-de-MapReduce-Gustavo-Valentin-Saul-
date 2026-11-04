@@ -1,12 +1,12 @@
 # Equipo 4: Pi por Monte Carlo (`pi`)
 
-Ejemplo de MapReduce que estima el valor de **π** con puntos en un cuadrado. Esta guía permite reproducir todo paso a paso, en **Windows** o **Linux**, usando solo este README[cite: 15].
+Ejemplo de MapReduce que estima el valor de **π** con puntos en un cuadrado. Esta guía permite reproducir todo paso a paso, en **Windows** o **Linux**, usando solo este README.
 
-> 💻 = comando que se escribe **en tu computadora** · 🐳 = comando que se escribe **dentro del contenedor** `hadoop`[cite: 15]
+> 💻 = comando que se escribe **en tu computadora** · 🐳 = comando que se escribe **dentro del contenedor** `hadoop`
 
 ## Integrantes
 
-- Gustavo Adalid Catalan Carmen[cite: 15]
+- Gustavo Adalid Catalan Carmen
 - Valentín Almaraz Martínez
 - Alberto Saúl Lopez Crespo
 
@@ -27,51 +27,49 @@ Ejemplo de MapReduce que estima el valor de **π** con puntos en un cuadrado. Es
 ├── presentacion.pdf       ← diapositivas
 └── presentacion.pptx      ← diapositivas editables
 ```
-[cite: 15]
 
 ---
 
 ## 1. ¿Qué hace el ejemplo `pi`?
 
-Calcula una **aproximación de π**[cite: 15]. Se imagina un cuadrado de lado 1 con un círculo inscrito (radio 0.5)[cite: 15]. El área del círculo es π · 0.5² = **π/4**, así que la fracción de puntos que cae dentro del círculo se acerca a π/4[cite: 15]:
+Calcula una **aproximación de π**. Se imagina un cuadrado de lado 1 con un círculo inscrito (radio 0.5). El área del círculo es π · 0.5² = **π/4**, así que la fracción de puntos que cae dentro del círculo se acerca a π/4:
 
 ```
 π ≈ 4 × (puntos dentro del círculo) / (puntos totales)
 ```
-[cite: 15]
 
 ![Puntos en el cuadrado unitario](imagenes/puntos_halton.png)
 
-**Caso real donde serviría:** la misma idea, estimar un valor lanzando muchísimas muestras independientes, se usa en simulaciones de Monte Carlo para valuar opciones financieras, calcular riesgos, simular el transporte de partículas en física o estimar probabilidades complejas[cite: 15]. Como cada muestra es independiente, el trabajo se reparte muy bien entre muchas máquinas, y por eso es un ejemplo clásico para MapReduce[cite: 15].
+**Caso real donde serviría:** la misma idea, estimar un valor lanzando muchísimas muestras independientes, se usa en simulaciones de Monte Carlo para valuar opciones financieras, calcular riesgos, simular el transporte de partículas en física o estimar probabilidades complejas[cite: 15]. Como cada muestra es independiente, el trabajo se reparte muy bien entre muchas máquinas, y por eso es un ejemplo clásico para MapReduce.
 
-> **Aclaración importante:** el `pi` de Hadoop no usa números aleatorios[cite: 15]. Usa un método **cuasi-Monte Carlo**: los puntos vienen de la **secuencia de Halton** (bases 2 y 3), que cubre el cuadrado de forma muy uniforme y es **determinista**[cite: 15]. Por eso, con los mismos parámetros **siempre da exactamente el mismo resultado**, algo que usaremos para comprobar la reproducibilidad[cite: 15].
+> **Aclaración importante:** el `pi` de Hadoop no usa números aleatorios[cite: 15]. Usa un método **cuasi-Monte Carlo**: los puntos vienen de la **secuencia de Halton** (bases 2 y 3), que cubre el cuadrado de forma muy uniforme y es **determinista**. Por eso, con los mismos parámetros **siempre da exactamente el mismo resultado**, algo que usaremos para comprobar la reproducibilidad.
 
 ## 2. ¿Cómo funciona? (Map y Reduce)
 
-El programa se ejecuta así: `pi <nMaps> <nSamples>` (cuántos mappers y cuántos puntos genera cada uno)[cite: 15].
+El programa se ejecuta así: `pi <nMaps> <nSamples>` (cuántos mappers y cuántos puntos genera cada uno).
 
 ![Diagrama Map y Reduce](imagenes/diagrama_mapreduce.png)
 
 | Fase | Qué entra | Qué hace | Qué sale |
 |---|---|---|---|
-| **Entrada** | Hadoop crea `nMaps` archivos pequeños[cite: 15] | Cada uno guarda un par `(offset, size)` con `offset = i · nSamples` y `size = nSamples`[cite: 15] | `(offset, size)` por mapper[cite: 15] |
-| **Map** | `(offset, size)`[cite: 15] | Genera los puntos de la secuencia de Halton desde el número `offset+1` hasta `offset+size` y cuenta cuántos caen dentro y fuera del círculo[cite: 15] | `(true, nDentro)` y `(false, nFuera)`[cite: 15] |
-| **Shuffle** | Los pares de todos los mappers[cite: 15] | Agrupa por clave (`true` / `false`)[cite: 15] | `true → [n₀, n₁, …]`, `false → [m₀, m₁, …]`[cite: 15] |
-| **Reduce** | Las listas de cada clave[cite: 15] | Suma todos los "dentro" y todos los "fuera" y guarda los totales en un archivo temporal[cite: 15] | `(totalDentro, totalFuera)`[cite: 15] |
-| **Final** | Los totales[cite: 15] | El programa principal calcula `4 · totalDentro / (nMaps · nSamples)` y lo imprime[cite: 15] | `Estimated value of Pi is …`[cite: 15] |
+| **Entrada** | Hadoop crea `nMaps` archivos pequeños[cite: 15] | Cada uno guarda un par `(offset, size)` con `offset = i · nSamples` y `size = nSamples` | `(offset, size)` por mapper |
+| **Map** | `(offset, size)` | Genera los puntos de la secuencia de Halton desde el número `offset+1` hasta `offset+size` y cuenta cuántos caen dentro y fuera del círculo | `(true, nDentro)` y `(false, nFuera)` |
+| **Shuffle** | Los pares de todos los mappers | Agrupa por clave (`true` / `false`) | `true → [n₀, n₁, …]`, `false → [m₀, m₁, …]` |
+| **Reduce** | Las listas de cada clave | Suma todos los "dentro" y todos los "fuera" y guarda los totales en un archivo temporal | `(totalDentro, totalFuera)` |
+| **Final** | Los totales | El programa principal calcula `4 · totalDentro / (nMaps · nSamples)` y lo imprime | `Estimated value of Pi is …` |
 
-**Mini ejemplo con `pi 2 5`** (10 puntos en total)[cite: 15]:
+**Mini ejemplo con `pi 2 5`** (10 puntos en total):
 
-- Map #0 procesa los puntos 1 a 5 de la secuencia: los 5 caen dentro → emite `(true, 5)` y `(false, 0)`[cite: 15].
-- Map #1 procesa los puntos 6 a 10: 4 caen dentro y 1 fuera → emite `(true, 4)` y `(false, 1)`[cite: 15].
-- Reduce suma: dentro = 5 + 4 = **9**, fuera = 0 + 1 = 1[cite: 15].
-- π ≈ 4 · 9 / 10 = **3.6**[cite: 15]. Con tan pocos puntos la estimación es mala, pero con más puntos mejora[cite: 15].
+- Map #0 procesa los puntos 1 a 5 de la secuencia: los 5 caen dentro → emite `(true, 5)` y `(false, 0)`.
+- Map #1 procesa los puntos 6 a 10: 4 caen dentro y 1 fuera → emite `(true, 4)` y `(false, 1)`.
+- Reduce suma: dentro = 5 + 4 = **9**, fuera = 0 + 1 = 1.
+- π ≈ 4 · 9 / 10 = **3.6**. Con tan pocos puntos la estimación es mala, pero con más puntos mejora.
 
 Notas:
 
-- Como el reparto usa `offset`, cada mapper trabaja con un tramo distinto de la misma secuencia[cite: 15]. Por eso el resultado solo depende del **total** de puntos (`nMaps × nSamples`), no de cómo se reparten[cite: 15].
-- `pi` **no deja una carpeta de salida con `part-r-00000`**: imprime el resultado en pantalla y borra su carpeta temporal `QuasiMonteCarlo_*` al terminar (igual que `sudoku` en la práctica)[cite: 15].
-- En modo standalone (nuestro contenedor) los maps se ejecutan en una sola máquina, normalmente uno tras otro[cite: 15]. En un clúster real correrían en paralelo en varios nodos[cite: 15].
+- Como el reparto usa `offset`, cada mapper trabaja con un tramo distinto de la misma secuencia. Por eso el resultado solo depende del **total** de puntos (`nMaps × nSamples`), no de cómo se reparten.
+- `pi` **no deja una carpeta de salida con `part-r-00000`**: imprime el resultado en pantalla y borra su carpeta temporal `QuasiMonteCarlo_*` al terminar (igual que `sudoku` en la práctica).
+- En modo standalone (nuestro contenedor) los maps se ejecutan en una sola máquina, normalmente uno tras otro. En un clúster real correrían en paralelo en varios nodos.
 
 ![Convergencia](imagenes/convergencia_pi.png)
 
@@ -79,8 +77,8 @@ Notas:
 
 ## 3. Requisitos
 
-- **Docker** instalado y en ejecución en tu computadora[cite: 15].
-- **Git** para clonar este repositorio[cite: 15].
+- **Docker** instalado y en ejecución en tu computadora.
+- **Git** para clonar este repositorio.
 
 | | 🪟 Windows 10/11 | 🐧 Linux (Fedora / Debian / Ubuntu) |
 |---|---|---|
