@@ -99,7 +99,7 @@ Los pasos 1 a 3 y 6 a 7 son **idénticos** en Windows y Linux. Cambian solo la i
 ### Paso 1 💻: clonar el repositorio
 
 ```bash
-git clone [https://github.com/gustavoadalid1-debug/EP.02.02.-Exposiciones-por-equipos-Ejemplos-de-MapReduce-Gustavo-Valentin-Saul-.git](https://github.com/gustavoadalid1-debug/EP.02.02.-Exposiciones-por-equipos-Ejemplos-de-MapReduce-Gustavo-Valentin-Saul-.git) bda-equipo-4-pi
+git clone https://github.com/gustavoadalid1-debug/EP.02.02.-Exposiciones-por-equipos-Ejemplos-de-MapReduce-Gustavo-Valentin-Saul-.git bda-equipo-4-pi
 cd bda-equipo-4-pi
 ```
 
