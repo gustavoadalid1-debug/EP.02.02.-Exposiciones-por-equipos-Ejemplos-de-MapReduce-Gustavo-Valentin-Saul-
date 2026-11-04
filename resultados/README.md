@@ -20,11 +20,3 @@
 | `pi 16 1000` | 16 000 | 3.14250000000000000000 |
 | `pi 16 1000000` (opcional, `ejecutar.sh grande`) | 16 000 000 | 3.14159125000000000000 |
 | `pi 10 1000000` (bonus del ejercicio) | 10 000 000 | 3.14158440000000000000 |
-
-## Capturas sugeridas (carpeta `capturas/`)
-
-- `01_docker_ps.png`: `docker ps -a` con el contenedor `hadoop` en `Up`.
-- `02_hadoop_version.png`: `hadoop version` mostrando 3.3.6.
-- `03_pi_10_1000.png`: ejecución de `pi 10 1000` con la línea `Estimated value of Pi is 3.14080000000000000000`.
-- `04_ejecutar_sh.png`: resumen final de `ejecutar.sh`.
-- `05_comparacion.png`: comparación con `resumen_esperado.txt` sin diferencias.
