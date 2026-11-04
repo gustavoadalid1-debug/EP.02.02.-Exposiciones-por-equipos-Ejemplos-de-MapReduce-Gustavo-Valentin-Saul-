@@ -1,0 +1,6 @@
+# No subir el instalador de Hadoop ni carpetas temporales
+hadoop-*.tar.gz
+*.tar.gz
+QuasiMonteCarlo_*/
+.DS_Store
+Thumbs.db

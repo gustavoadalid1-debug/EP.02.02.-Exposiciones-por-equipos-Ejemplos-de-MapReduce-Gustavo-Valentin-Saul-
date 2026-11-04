@@ -1,0 +1,6 @@
+# Evita que Windows convierta los scripts a CRLF (rompería ejecutar.sh en Linux)
+* text=auto
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
